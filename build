@@ -72,14 +72,14 @@ if [ "$(realpath -q ${PATCHDIR})" = "/" ]; then
 	exit 1
 fi
 
-case ${RELEASE##*-} in
-RELEASE|BETA|RC*)
-	URL="${BASEURL}/releases";;
-*)
-	URL="${BASEURL}/snapshots";;
-esac
+#case ${RELEASE##*-} in
+#RELEASE|BETA|RC*)
+	URL="${BASEURL}/releases"
+#*)
+#	URL="${BASEURL}/releases";;
+#esac
 
-DISTSITE=${URL}/${ARCH}/${RELEASE}
+DISTSITE=${URL}/${ARCH}/${ARCH}/${RELEASE}
 XORG_CONF_D="${SYSDIR}/usr/local/etc/X11/xorg.conf.d"
 FONTSDIR="${SYSDIR}/usr/local/share/fonts"
 FONTPATHS_FILE="${XORG_CONF_D}/files.conf"
