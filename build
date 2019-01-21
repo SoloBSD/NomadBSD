@@ -72,12 +72,7 @@ if [ "$(realpath -q ${PATCHDIR})" = "/" ]; then
 	exit 1
 fi
 
-#case ${RELEASE##*-} in
-#RELEASE|BETA|RC*)
-	URL="${BASEURL}/releases"
-#*)
-#	URL="${BASEURL}/releases";;
-#esac
+URL="${BASEURL}/releases"
 
 DISTSITE=${URL}/${ARCH}/${ARCH}/${RELEASE}
 XORG_CONF_D="${SYSDIR}/usr/local/etc/X11/xorg.conf.d"
@@ -89,7 +84,7 @@ GPTROOT=nomadroot
 TMP_BASE_DIR=tmpbase
 TMP_IMAGE_NAME=tmpbase.img
 KERNCONF_DIR="${SYSDIR}/usr/src/sys/${ARCH}/conf"
-KERNCONF_NOMADBSD="${KERNCONF_DIR}/NOMADBSD"
+KERNCONF_NOMADBSD="${KERNCONF_DIR}/HARDENEDBSD"
 KERNCONF_GENERIC="${KERNCONF_DIR}/GENERIC"
 
 instusrcfg()
@@ -154,14 +149,6 @@ createbase()
 	BSDINSTALL_DISTSITE=${DISTSITE} bsdinstall distfetch
 	BSDINSTALL_DISTDIR="${DISTDIR}" BSDINSTALL_CHROOT="${SYSDIR}" \
 	    DISTRIBUTIONS="kernel.txz src.txz" bsdinstall distextract
-}
-
-updatebase()
-{
-	PAGER=cat freebsd-update --currently-running ${RELEASE} \
-		-f config/etc/freebsd-update.conf -b "${SYSDIR}" fetch && \
-	PAGER=cat freebsd-update --currently-running ${RELEASE} \
-		-f config/etc/freebsd-update.conf -b "${SYSDIR}" install
 }
 
 buildnvidia()
@@ -292,7 +279,7 @@ instports()
 
 buildkernel()
 {
-	local makeopts="KERNCONF=NOMADBSD ${BUILDKERNEL_OPTS}"
+	local makeopts="KERNCONF=HARDENEDBSD ${BUILDKERNEL_OPTS}"
 	local regx="/DEBUG=-g/d; /WITH_CTF=1/d; /^ident.*GENERIC/d;"
 	      regx="${regx}/^options.*DDB/d; /^options.*KDB/d;"
 	      regx="${regx}/^options.*GDB/d"
@@ -546,11 +533,6 @@ all()
 	stages="${stages} createuzip createimage cleanup"
 
 	_init
-	# Do not run freebsd-update on STABLE or CURRENT.
-	if ! (echo ${RELEASE} | grep -Eq 'STABLE|CURRENT'); then
-		echo updatebase > ".failed-stage"
-		updatebase
-	fi 
 	if [ ! -z "${BUILD_KERNEL}" ]; then
 		case ${BUILD_KERNEL} in
 		[yY][eE][sS])
@@ -569,7 +551,7 @@ all()
 resumebuild()
 {
 	local i stages stage_found failed_stage
-	stages="updatebase buildkernel instpkgs instgit instports"
+	stages="buildkernel instpkgs instgit instports"
 	stages="${stages} builddrmlegacy postpkgcfg"
 	stages="${stages} createuzip createimage cleanup"
 
@@ -629,7 +611,6 @@ while [ $# -gt 0 ]; do
 	uzip)	  createuzip;;
 	usrcfg)	  instusrcfg;;
 	usrclean) usrclean;;
-	update)	  updatebase;;
 	*)		  usage;;
 	esac
 	shift
