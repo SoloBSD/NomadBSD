@@ -86,8 +86,8 @@ GPTROOT=nomadroot
 TMP_BASE_DIR=tmpbase
 TMP_IMAGE_NAME=tmpbase.img
 KERNCONF_DIR="${SYSDIR}/usr/src/sys/${ARCH}/conf"
-KERNCONF_NOMADBSD="${KERNCONF_DIR}/HARDENEDBSD"
-KERNCONF_GENERIC="${KERNCONF_DIR}/GENERIC"
+KERNCONF_NOMADBSD="${KERNCONF_DIR}/NOMADBSD"
+KERNCONF_GENERIC="${KERNCONF_DIR}/HARDENEDBSD"
 
 instusrcfg()
 {
@@ -281,7 +281,7 @@ instports()
 
 buildkernel()
 {
-	local makeopts="KERNCONF=HARDENEDBSD ${BUILDKERNEL_OPTS}"
+	local makeopts="KERNCONF=NOMADBSD ${BUILDKERNEL_OPTS}"
 	local regx="/DEBUG=-g/d; /WITH_CTF=1/d; /^ident.*GENERIC/d;"
 	      regx="${regx}/^options.*DDB/d; /^options.*KDB/d;"
 	      regx="${regx}/^options.*GDB/d"
