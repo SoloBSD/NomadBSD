@@ -153,63 +153,63 @@ createbase()
 	    DISTRIBUTIONS="kernel.txz src.txz" bsdinstall distextract
 }
 
-buildnvidia()
-{
-	[ ! -d "${SYSDIR}/usr/ports" ] && mkdir "${SYSDIR}/usr/ports"
-	if ! (mount | grep -q "${SYSDIR}/usr/ports"); then
-		mount -t nullfs "${PORTSTREE}" "${SYSDIR}/usr/ports"
-	fi
-	if ! (mount | grep -q "${SYSDIR}/dev"); then
-		chroot "${SYSDIR}" sh -c 'mount -t devfs devfs /dev'
-	fi
-	[ ! -d "nvidia" ] && mkdir "nvidia" 
-	for d in nvidia-driver-304 nvidia-driver-340 nvidia-driver; do
-		pkgname=$(cd "${PORTSTREE}/x11/$d" && make -VPKGNAME)
-		[ -f nvidia/${pkgname}.txz ] && continue
-		chroot "${SYSDIR}" sh -c "cd /usr/ports/x11/$d && \
-			make BATCH=1 ${NVIDIA_BUILD_OPTS} clean package" || bail
-		cp "${SYSDIR}/usr/ports/x11/$d/work/pkg/${pkgname}.txz" nvidia || bail
-		chroot "${SYSDIR}" sh -c "cd /usr/ports/x11/$d && make distclean"
-	done
-	umount "${SYSDIR}/usr/ports"
-	umount "${SYSDIR}/dev"
-}
+#buildnvidia()
+#{
+#	[ ! -d "${SYSDIR}/usr/ports" ] && mkdir "${SYSDIR}/usr/ports"
+#	if ! (mount | grep -q "${SYSDIR}/usr/ports"); then
+#		mount -t nullfs "${PORTSTREE}" "${SYSDIR}/usr/ports"
+#	fi
+#	if ! (mount | grep -q "${SYSDIR}/dev"); then
+#		chroot "${SYSDIR}" sh -c 'mount -t devfs devfs /dev'
+#	fi
+#	[ ! -d "nvidia" ] && mkdir "nvidia" 
+#	for d in nvidia-driver-304 nvidia-driver-340 nvidia-driver; do
+#		pkgname=$(cd "${PORTSTREE}/x11/$d" && make -VPKGNAME)
+#		[ -f nvidia/${pkgname}.txz ] && continue
+#		chroot "${SYSDIR}" sh -c "cd /usr/ports/x11/$d && \
+#			make BATCH=1 ${NVIDIA_BUILD_OPTS} clean package" || bail
+#		cp "${SYSDIR}/usr/ports/x11/$d/work/pkg/${pkgname}.txz" nvidia || bail
+#		chroot "${SYSDIR}" sh -c "cd /usr/ports/x11/$d && make distclean"
+#	done
+#	umount "${SYSDIR}/usr/ports"
+#	umount "${SYSDIR}/dev"
+#}
 
-builddrmlegacy()
-{
-	[ ! -d "${SYSDIR}/usr/ports" ] && mkdir "${SYSDIR}/usr/ports"
-	if ! (mount | grep -q "${SYSDIR}/usr/ports"); then
-		mount -t nullfs "${PORTSTREE}" "${SYSDIR}/usr/ports"
-	fi
-	if ! (mount | grep -q "${SYSDIR}/dev"); then
-		chroot "${SYSDIR}" sh -c 'mount -t devfs devfs /dev'
-	fi
-	# Build, and copy the kmods to /boot/drm_legacy
-	if [ ! -d "${SYSDIR}/boot/drm_legacy" ]; then
-		mkdir "${SYSDIR}/boot/drm_legacy" || bail
-	fi
-	chroot "${SYSDIR}" \
-	    sh -c 'cd /usr/ports/graphics/drm-legacy-kmod && \
-			   make clean && make BATCH=1 && \
-			   (cd work/stage/boot/modules && tar cf - . | \
-			   (cd /boot/drm_legacy && tar xvf -)); \
-			   make clean; kldxref /boot/drm_legacy'
-	umount "${SYSDIR}/usr/ports"
-	umount "${SYSDIR}/dev"
-}
+#builddrmlegacy()
+#{
+#	[ ! -d "${SYSDIR}/usr/ports" ] && mkdir "${SYSDIR}/usr/ports"
+#	if ! (mount | grep -q "${SYSDIR}/usr/ports"); then
+#		mount -t nullfs "${PORTSTREE}" "${SYSDIR}/usr/ports"
+#	fi
+#	if ! (mount | grep -q "${SYSDIR}/dev"); then
+#		chroot "${SYSDIR}" sh -c 'mount -t devfs devfs /dev'
+#	fi
+#	# Build, and copy the kmods to /boot/drm_legacy
+#	if [ ! -d "${SYSDIR}/boot/drm_legacy" ]; then
+#		mkdir "${SYSDIR}/boot/drm_legacy" || bail
+#	fi
+#	chroot "${SYSDIR}" \
+#	    sh -c 'cd /usr/ports/graphics/drm-legacy-kmod && \
+#			   make clean && make BATCH=1 && \
+#			   (cd work/stage/boot/modules && tar cf - . | \
+#			   (cd /boot/drm_legacy && tar xvf -)); \
+#			   make clean; kldxref /boot/drm_legacy'
+#	umount "${SYSDIR}/usr/ports"
+#	umount "${SYSDIR}/dev"
+#}
 
 instpkgs()
 {
 	export ASSUME_ALWAYS_YES=yes
 	cat ${PKGLIST} | xargs -J% pkg -c "${SYSDIR}" install -y % || bail
-	buildnvidia
-	mkdir -p "${SYSDIR}/usr/local/nvidia/304" 2>/dev/null
-	mkdir -p "${SYSDIR}/usr/local/nvidia/340" 2>/dev/null
-	mkdir -p "${SYSDIR}/usr/local/nvidia/390" 2>/dev/null
-	for v in 304 340 390; do
-		cat nvidia/nvidia-driver-${v}*.txz | \
-		    (cd "${SYSDIR}/usr/local/nvidia/${v}" && tar xf -)
-	done
+#	buildnvidia
+#	mkdir -p "${SYSDIR}/usr/local/nvidia/304" 2>/dev/null
+#	mkdir -p "${SYSDIR}/usr/local/nvidia/340" 2>/dev/null
+#	mkdir -p "${SYSDIR}/usr/local/nvidia/390" 2>/dev/null
+#	for v in 304 340 390; do
+#		cat nvidia/nvidia-driver-${v}*.txz | \
+#		    (cd "${SYSDIR}/usr/local/nvidia/${v}" && tar xf -)
+#	done
 }
 
 instgit()
@@ -531,7 +531,7 @@ all()
 {
 	local i stages
 
-	stages="instpkgs instgit instports builddrmlegacy postpkgcfg"
+	stages="instpkgs instgit instports postpkgcfg"
 	stages="${stages} createuzip createimage cleanup"
 
 	_init
@@ -554,7 +554,7 @@ resumebuild()
 {
 	local i stages stage_found failed_stage
 	stages="buildkernel instpkgs instgit instports"
-	stages="${stages} builddrmlegacy postpkgcfg"
+	stages="${stages} postpkgcfg"
 	stages="${stages} createuzip createimage cleanup"
 
 	stage_found=0
@@ -618,4 +618,3 @@ while [ $# -gt 0 ]; do
 	esac
 	shift
 done
-
